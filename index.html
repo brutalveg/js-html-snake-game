@@ -19,7 +19,16 @@
 
 		.snake {
 			background-color: #555;
-			border-radius: 10%;
+			border-radius: 5%;
+			position: fixed; 
+			padding: 5px;
+			left: 0;
+			top: 0;
+		}
+
+		#food {
+			background-color: #555;
+			border-radius: 5%;
 			position: fixed; 
 			padding: 5px;
 			left: 0;
@@ -34,82 +43,184 @@
 		<span class="snake"></span>
 		<span class="snake"></span>
 		<span class="snake"></span>
-		<span class="snake"></span>
+		<span id="food"></span>
 	</div>
 
 	<script>
 
-		let speed    = 500;
-		let block    = 10;
-		let pos 	 = 'left';
-		let snakes = document.getElementsByClassName('snake');
+		let pixels 	  = 10;
+		let speed 	  = 100;
+		let direction = 'right';
+		let snakes    = document.getElementsByClassName('snake');
+
+		// Move elements
+		setInterval(function () {
+
+			move();
+
+		}, speed);
 
 		function move() {	
 
-			for (let i = 0; i < snakes.length; i++) {
-				let start = i * speed;
-				let snake = snakes[i];
+			let food = document.getElementById('food');
 
-				go(snake, pos, start);
+			// Capture food
+			capture(food);
+
+			for (let i = 0; i < snakes.length; i++) {
+
+				let changeDirectionAfter = i * speed;
+
+				followDirection(snakes[i], direction, changeDirectionAfter);
 				
 			}
 		}
 
-		function go(snake, position, start) {
+		function followDirection(el, position, changeDirectionAfter) {
 			setTimeout(function() {
-				
-				let style = window.getComputedStyle(snake);
-				let px = null;
-				 
 
 				switch (position) {
 					case 'left':
-						px = style.getPropertyValue(position);
-						px = parseInt(px) + block;
-						snake.style[position] = px +'px';
+						goLeft(el);
 						break;
+
 					case 'right':
-						px = style.getPropertyValue('left');
-						px = parseInt(px) - block;
-						snake.style['left'] = px +'px';
+						goRight(el);
 						break;
-					case 'top':
-						px = style.getPropertyValue(position);
-						px = parseInt(px) + block;
-						snake.style[position] = px +'px';
+
+					case 'up':
+						goUp(el);
 						break;
-					case 'bottom':
-						px = style.getPropertyValue('top');
-						px = parseInt(px) - block;
-						snake.style['top'] = px +'px';
+
+					case 'down':
+						goDown(el);
 						break;
-				}
+
+					case 'p':
+						pause = pause == true ? false : true;
+						break;
+				}				
 				
-				
-			}, start);
+			}, changeDirectionAfter);
 		}
 
-		setInterval(function () {
-			move();
-		}, speed);
-
 		document.addEventListener('keydown', function (e) {
-			if (e.key == 'ArrowUp') {
-				pos = 'bottom';
-			}
-
-			if (e.key == 'ArrowRight') {
-				pos = 'left';
-			}
-
-			if (e.key == 'ArrowDown') {
-				pos = 'top';
-			}
-
-			if (e.key == 'ArrowLeft') {
-				pos = 'right';
+			switch (e.key) {
+				case 'ArrowUp':
+					if (direction !== 'down') {
+						direction = 'up'
+					}					
+					break;
+				case 'ArrowRight':
+					if (direction !== 'left') {
+						direction = 'right';
+					}
+					break;
+				case 'ArrowDown':
+					if (direction !== 'up') {
+						direction = 'down';
+					}
+					break;
+				case 'ArrowLeft':
+					if (direction !== 'right') {
+						direction = 'left';
+					}
+					break;
 			}
 		});
+
+		function goUp(el) {
+
+			let elPropValue = null;
+
+			elPropValue = getCssValue(el, 'top') - pixels;
+
+			el.style['top'] = elPropValue +'px';
+		}
+
+		function goRight(el) {
+
+			// Get element css property value
+			let style = getComputedStyle(el);
+			let elPropValue = null;
+
+			elPropValue = style.getPropertyValue('left');
+			elPropValue = parseInt(elPropValue) + pixels;
+
+			el.style['left'] = elPropValue +'px';
+		}
+
+		function goDown(el) {
+
+			// Get element css property value
+			let style = getComputedStyle(el);
+			let elPropValue = null;
+
+			elPropValue = style.getPropertyValue('top');
+			elPropValue = parseInt(elPropValue) + pixels;
+
+			el.style['top'] = elPropValue +'px';
+		}
+
+		function goLeft(el) {
+
+			// Get element css property value
+			let style = getComputedStyle(el);
+			let elPropValue = null;
+
+			elPropValue = style.getPropertyValue('left');
+			elPropValue = parseInt(elPropValue) - pixels;
+
+			el.style['left'] = elPropValue +'px';
+		}
+
+		function food() {
+			
+			let xPosition = randomFoodPosition();
+			let yPosition = randomFoodPosition();
+
+			let food = document.getElementById('food');
+
+			food.style.top  = yPosition +'px';
+			food.style.left = xPosition +'px';
+		}
+
+		function randomFoodPosition() {
+			let number = Math.floor(Math.random() * 380);
+
+			return Math.round(number / 10) * 10;
+		}
+
+		function capture(food) {
+			let snakeXPosition = getCssValue(snakes[0], 'left');
+			let snakeYPosition = getCssValue(snakes[0], 'top');
+
+			let foodXPosition  = getCssValue(food, 'left');
+			let foodYPosition  = getCssValue(food, 'top');
+
+			if (snakeXPosition == foodXPosition && snakeYPosition == foodYPosition) {
+				if (food.hasAttribute('id')) {
+					food.setAttribute('class', 'snake');
+					food.removeAttribute('id');
+					createElement();
+				}
+			}
+			
+		}
+
+		function getCssValue(el, property) {
+			// Get element css property value
+			let style = getComputedStyle(el);
+			return parseInt(style.getPropertyValue(property))
+		}
+
+		function createElement() {
+			let el = document.getElementsByClassName('container')[0];
+			el.insertAdjacentHTML("beforeEnd", '<span id="food"></span');
+			food();
+		}
+
+		food();
 
 	</script>
 </body>
